@@ -2,28 +2,64 @@ require "language/go"
 
 class TerraformProviderTack < Formula
 #  head "https://github.com/some/package.git", :branch => "develop"
+
   desc "Terraform provider to support the Tack project"
-  homepage "https://github.com/kz8s/terraform-tack"
-  url "https://github.com/kz8s/terraform-tack/archive/develop.tar.gz"
-  version "0.0.1"
+  homepage "https://github.com/kz8s/terraform-provider-tack"
+  sha256 "92865181ab7f47c0ff17c0f042f872cce66e50b5100bf473c097f2825b5889cc"
+  url "https://github.com/kz8s/terraform-provider-tack/archive/v0.2.tar.gz"
+  version "0.2.0"
+
+  head "https://github.com/kz8s/terraform-provider-tack.git"
 
   depends_on "go" => :build
+  depends_on "terraform" => :recommended
 
   def install
     ENV["GOBIN"] = bin
     ENV["GOPATH"] = buildpath
     ENV["GOHOME"] = buildpath
 
-    path = buildpath/"src/github.com/kz8s/terraform-tack"
-    path.install Dir["*"]
+    path = buildpath/"src/github.com/kz8s/terraform-provider-tack"
+
+    contents = Dir[ "{*,.git,.gitignore}" ]
+    path.install contents
 
     Language::Go.stage_deps resources, buildpath/"src"
 
     cd path do
-        system "go", "get"
-        system "go", "build", "-o", "terraform-provider-tack"
+        system "make", "get"
+        system "make", "build"
         bin.install "terraform-provider-tack"
     end
+  end
+
+  test do
+    minimal = testpath/"minimal.tf"
+    minimal.write <<-EOS.undent
+      resource "tack_aws_account_id" "foo" {}
+
+      resource "tack_aws_azs" "foo" { region  = "us-west-2" }
+
+      resource "tack_coreos" "foo" {
+        channel = "stable"
+        region  = "us-west-1"
+        vmtype  = "hvm"
+      }
+
+      resource "tack_curl" "foo" {
+        url = "http://myip.vg"
+      }
+
+      resource "tack_my_ip" "foo" {}
+
+      output "account_id" { value = "${ tack_aws_account_id.foo.id }" }
+      output "ami" { value = "${ tack_coreos.foo.ami }" }
+      output "body" { value = "${ tack_curl.foo.body }" }
+      output "azs" { value = "${ join(",", tack_aws_azs.foo.*.azs) }" }
+      output "azs_string" { value = "${ tack_aws_azs.foo.azs_string }" }
+      output "my_ip" { value = "${ tack_my_ip.foo.ip }" }
+    EOS
+    system "#{bin}/terraform", "graph", testpath
   end
 
 end
