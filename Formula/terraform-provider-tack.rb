@@ -1,16 +1,15 @@
 require "language/go"
 
 class TerraformProviderTack < Formula
-#  head "https://github.com/some/package.git", :branch => "develop"
-
   desc "Terraform provider to support the Tack project"
   homepage "https://github.com/kz8s/terraform-provider-tack"
-  sha256 "92865181ab7f47c0ff17c0f042f872cce66e50b5100bf473c097f2825b5889cc"
-  url "https://github.com/kz8s/terraform-provider-tack/archive/v0.2.tar.gz"
-  version "0.2.0"
+  sha256 "cc4ac81fb58c11aee6ebae72d86e92de747632cfb562ffebff2d363729084f65"
+  url "https://github.com/kz8s/terraform-provider-tack/archive/v0.4.tar.gz"
+  # version "0.2.0"
 
-  head "https://github.com/kz8s/terraform-provider-tack.git"
+  head "https://github.com/kz8s/terraform-provider-tack.git", :branch => "develop"
 
+  depends_on "glide"
   depends_on "go" => :build
   depends_on "terraform" => :recommended
 
@@ -29,6 +28,7 @@ class TerraformProviderTack < Formula
     cd path do
         system "make", "get"
         system "make", "build"
+        system "make", "install"
         bin.install "terraform-provider-tack"
     end
   end
